@@ -1,0 +1,135 @@
+@page "/"
+
+<div class="content">
+
+    <h1>Welcome to ReBlaze</h1>
+    <p>Simple way to control your Ethernet relays</p>
+    <h3>What is this?
+    </h3>
+    <p><abbr>ReBlaze</abbr> is a word made from Relay and Blazor. Blazor is a name of a program used to write this
+        site.
+    </p>
+    <p>There are many different Ethernet devices on Amazon. Those are useful. You can control power outlets, lights
+        and other equipment with computers.While this is useful, there is a drawback. Most of those relays and devices
+        come with incompatible interfaces and control modules.You would need to write a separate program for every
+        device you purchased out there.
+    </p>
+    <p>ReBlaze solves the above problems. You can purchase any device that connects to the network and instruct
+        ReBlazeto talk to this device. You can execute commands on your relays right in this app,or you can get smart
+        links that you can plug into any other app to control your devices.
+    </p>
+    <h3>For starters - where is the dictionary?</h3>
+
+    <p>There are some words to be familiar with before you are going to do anything with a relay. Those are:</p>
+    <p><strong>Hexadecimal:</strong> Hexa- means six. Decimal means ten. Hexadecimal means sixteen. It's a way of
+        representing the numbers in a computer.Instead of having 10 digits (from 0 to 9) we will have 16 digits. Those 6
+        extra digits would be a, b, c, d, e and f. So when you count up from 0 to 10you would go 0, 1, 2, 3, 4, 5, 6, 7,
+        8, 9, a, b, c, d, e, f, 10, 11...
+    </p>
+
+    <p><strong>Byte:</strong> Computer representation of a number from 0 to 255. Bytes represented as 2 hexadecimal
+        numbers. Usually, byte is recorded as 0x11(this 0x tells a programmer that he is looking not at a number 11, but
+        at a he<strong>X</strong>adecimal number 11, that equals 17 in our regular decimal system.)Bytes can go from
+        0x00 to 0xff as a maximum value. In a regular decimal system, 0xff equals 255.You don't have to know a lot about
+        hexadecimal numbers to use ReBlaze, but you have to be able to recognize a byte when you look at it.
+    </p>
+
+    <p><strong>ASCII String:</strong> stands for American Standard Code for Information Interchange. It's a way for a
+        computer to represent a string of text as a bunch of bytes.There is a table with every byte from 0x00 to 0xff
+        has a letter or character assigned to it. Most of your text commands would be ASCII strings.
+    </p>
+    <p><strong>UTF String:</strong> stands for Unicode Transformation Format. Every character in ASCII can be from
+        0x00 to 0xff (255 characters maximum). It's enough forEnglish alphabet. But there are many other languages in
+        there. Thus, Unicode uses from 0x0000 to 0xffff, it's 65535 different symbols. This allows you to send
+        multi-languagestrings of text. In most cases, you will never need to use this system in your relays, unless they
+        accept Chinese commands or something like that. Most relays speak English.
+    </p>
+    <p><strong>Ethernet:</strong> usual word to refer to a device that can be connected to a network.
+    </p>
+
+    <h3>Basic concept</h3>
+    <img src="img/hatting1.png" class="img-fluid" />
+    <p>ReBlaze has a database in its core. You need to explain to it what devices you have on the network,how to name
+        those and what commands to send.Once this is done you can send the device name and command name to the ReBlaze,
+        and it willsend the actual command to a device.
+    </p>
+    <h3>How to start this system</h3>
+    <p>In the ReBlaze folder you will find a file called run.cmd. Run it to start the system. By default, this system
+        will assume any IPaddress on your computer and install itself as a website running from your computer. If you
+        want to change it and give it a static IP addressyou should open run.cmd in a notepad and change
+        <code>http://*:80</code> to <code>http://192.168.1.1:80</code>, for example.
+    </p>
+    <p>If you get a Windows Security Alert, asking permission for this program to access networks, OK it to access
+        both private and public networks.</p>
+    <h3>Programming a device model</h3>
+    <p>Once you purchase a device you need to open Models tab and create a new model. Type the name of the model, and
+        it's description.Once it's done you should open settings of the model and set up the commands.
+    </p>
+    <p>Most of the devices come with some sort of a manual. It's either hard-copy or a PDF. In the manual you can find
+        actualcommands you would need to send over the network to activate one or the other function.
+    </p>
+    <p>Commands could be one of 4 types:</p>
+    <ul>
+        <li>ASCII String</li>
+        <li>UTF String</li>
+        <li>Byte Sequence</li>
+        <li>Binary Sequence</li>
+
+    </ul>
+    <p>Study your device documentation to figure out what are you trying to send to the device.</p>
+    <h4>Example - sending a command as a Byte Sequence</h4>
+    <p>Below is an excerpt from the manual of RLY-8 DF Robots relay.</p>
+    <img src="img/hatting2.png" class="img-fluid" />
+    <p>You can clearly see what sequence of bytes you need to send to the device to activate one or another
+        function.Let's implement this command in our system.
+    </p>
+    <p>Go to the <a href="models">Models</a> and create a new device model at the bottom of a page. Type a model name
+        and it's description.</p>
+    <img src="img/hatting3.png" class="img-fluid" />
+    <p>After this is done, go to the settings page of this new device. The only option you will see would be "Add
+        command". </p>
+    <img src="img/hatting4.png" class="img-fluid" />
+    <p>Type a name for this command (<code>relay-1-on</code>), write a description and type the exact sequence ofbytes
+        you can see in the manual in the payload field. Select the command type to be ByteArray.
+    </p>
+    <p>Once this is done, go to the <a href="devices/">Devices</a> page. Create a new device with the name
+        <code>shr</code>,appropriate address and port that you can find in the manual and select RLY 8 as a model.
+    </p>
+    <p>When the above is done, find this new device in a list, and press "Show commands" link. You will see
+        allavailable commands for RLY 8 device. Click on a thunderbolt icon next to "Turn On Relay 1"command and your
+        relay will execute the command.
+    </p>
+    <h4>Other types of the commands - Binary and Strings</h4>
+    <p>It gets easier. It's very improbable that you will find a device that has to work with binary codes. But if
+        anything, you can just send a string of zeroes and ones that will be converted to a binary numbers</p>
+    <p>Most of the devices will use strings of some sort to set state. It's the easiest thing to program. Let's look
+        in the manual again:</p>
+    <img src="img/hatting5.png" class="img-fluid" />
+    <p>Here one can see a string of text you can send to the device to turn on first 6 relays. Add a new command,
+        select format of UTF String and type just exactly that in the payload
+        field:<code>{"relay1":"on","relay2":"on","relay3":"on","relay4":"on","relay5":"on","relay6":"on","relay7":"off","relay8":"off"}</code>
+    </p>
+    <p>Now you can send this command to your device.</p>
+    <h3>Important note - names of devices and commands</h3>
+    <p>It's crucial to name devices and commands as simple as you can. Those names will be a part of a control URL,
+        thus if you will call your device <code>Best Relay Ever</code>and your command
+        <code>Command to turn on all the relays on the base</code> your final URL might be very cumbersome,
+        like<code>http://control/commands/Best%20Relay%20Ever/Command%20to%20turn%20on%20all%20the%20relays%20on%20the%20base</code>
+    </p>
+    <p>A smarter idea would be to call your device something like <code>lobby-1</code> , and the command should be
+        called <code>all-on</code>. In this case, your final URL toexecute this command would be
+        <code>http://control/commands/lobby-1/all-on</code>, which is much easier to manage.
+    </p>
+    <h3>Using command URLs</h3>
+    <p>To the left of the thunderbolt icon you will see a command URL. It's a special web address. Should you go to
+        that address, the applicable command will be executed.In your case, it will look something like <a
+            href="#">http://control/commands/shr/relay-1-on</a>. (Not an actual link)
+    </p>
+    <p>You can copy this link into your browser and go there. The command would be executed at once. It's useful to
+        configure different systems.
+    </p>
+</div>
+
+@code {
+
+}

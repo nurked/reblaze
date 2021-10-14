@@ -1,0 +1,95 @@
+@implements IDisposable
+@inject IDbContextFactory<ReBlaze.DataModel.DataModelContext> DbFactory
+
+
+@inject IRefresher Refresher
+
+<div class="col-8 m-1">
+    <div class="card">
+        <div class="card-header"><span class="oi oi-vertical-align-center"></span> Add new device</div>
+        <div class="card-body">
+            <form>
+                <div class="form-row mb-3">
+                    <div class="col"><input placeholder="Device name" class="form-control" type="text" @bind=name></div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <input placeholder="Description" class="form-control" type="text"
+                               @bind=description>
+                    </div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col"><input placeholder="Address" class="form-control" type="text" @bind=address></div>
+                </div>
+
+                <div class="form-row mb-3">
+                    <div class="col"><input placeholder="Port" class="form-control" type="number" @bind=port></div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <select @bind=modelid class="form-control">
+                            @foreach (var m in _models)
+                            {
+                                <option value=@m.ID>@m.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col text-center">
+                        <button @onclick=SaveChanges class="btn btn-primary">Save</button>
+
+                    </div>
+                </div>
+
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    public string name { get; set; }
+    public string description { get; set; }
+    public string address { get; set; }
+    public int port { get; set; }
+    public int modelid { get; set; }
+
+    ReBlaze.DataModel.DataModelContext Context { get; set; }
+
+    List<ReBlaze.DataModel.Model> _models;
+
+    protected override void OnInitialized()
+    {
+        Context = DbFactory.CreateDbContext();
+
+        _models = Context.Models.ToList();
+        base.OnInitialized();
+    }
+
+
+
+    private void SaveChanges()
+    {
+        Context = DbFactory.CreateDbContext();
+        Context.Devices.AddAsync(new()
+        {
+            Name = name,
+            Description = description,
+            Address = address,
+            Port = port,
+            ModelId = modelid
+        }).AsTask().Wait();
+        Context.SaveChangesAsync().Wait();
+        Refresher.CallRequestRefresh("ReBlaze.Pages.Devices");
+
+    }
+
+
+
+    public void Dispose()
+    {
+        Context?.Dispose();
+    }
+}

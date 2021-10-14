@@ -1,0 +1,92 @@
+@inject IRefresher Refresher
+@inject IDbContextFactory<ReBlaze.DataModel.DataModelContext> DbFactory
+
+
+
+
+<div class="row">
+    <div class="col m-1">
+        <div class="card">
+            <div class="card-header">
+                Add new command
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="form-fow mb-3">
+                        <div class="col">
+                            <input type="text" class="form-control" placeholder="Command name" @bind=Name>
+
+                        </div>
+                    </div>
+                    <div class="form-fow mb-3">
+                        <div class="col">
+                            <input type="text" class="form-control" placeholder="Description" @bind=Description>
+
+                        </div>
+                    </div>
+                    <div class="form-fow mb-3">
+                        <div class="col">
+                            <input type="text" class="form-control" placeholder="Payload" @bind=Payload>
+
+                        </div>
+                    </div>
+                    <div class="form-fow mb-3">
+                        <div class="col">
+                            <select @bind=Type class="form-control">
+                                @foreach (var e in Enum.GetValues<ReBlaze.DataModel.CommandType>())
+                                {
+                                    <option value=@e>@e</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-fow mb-3">
+                        <div class="col">
+                            <button class="btn btn-primary" @onclick=Save>Add</button>
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ReBlaze.DataModel.Model Data { get; set; }
+
+    ReBlaze.DataModel.DataModelContext Context { get; set; }
+
+    private string Name { get; set; }
+    private string Description { get; set; }
+    private string Payload { get; set; }
+    private ReBlaze.DataModel.CommandType Type { get; set; }
+
+    public void Save()
+    {
+
+        Context = DbFactory.CreateDbContext();
+        var f = Context.Models.Attach(Data).Entity;
+        if (f.Commands == null) f.Commands = new List<ReBlaze.DataModel.Command>();
+        f.Commands.Add(new()
+        {
+            Name = Name,
+            Description = Description,
+            Payload = Payload,
+            Type = Type
+        });
+        Context.SaveChanges();
+
+        Refresher.CallRequestRefresh("ReBlaze.Pages.Models");
+
+
+    }
+
+    public void Dispose()
+    {
+        Context?.Dispose();
+    }
+
+}

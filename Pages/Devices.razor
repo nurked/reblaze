@@ -1,0 +1,113 @@
+@using ReBlaze.Shared.Device
+
+@implements IDisposable
+@inject IDbContextFactory<ReBlaze.DataModel.DataModelContext> DbFactory
+@inject IRefresher Refresher
+
+
+@page "/devices/{id:int?}"
+
+<div class="container">
+    @if (Id.HasValue)
+    {
+        if (_cur == null)
+        {
+            <div class="alert alert-warning" role="alert">
+                Can't find this device
+            </div>
+        }
+        else
+        {
+
+            <h1>@_cur.Name</h1>
+            <p>
+                @_cur.Description
+            </p>
+        }
+    }
+    else
+    {
+        @if (_devices == null)
+        {
+            <div>Thinking about it...</div>
+        }
+        else
+        {
+            if (_devices.Count == 0)
+            {
+                <div>There are no devices in the list. Create some....</div>
+            }
+            else
+            {
+                foreach (ReBlaze.DataModel.Device m in _devices)
+                {
+                    <div class="row m-2">
+                        <Device @key=@m.ID Data=@m></Device>
+                    </div>
+                }
+            }
+        }
+        <div class="row justify-content-md-center">
+            <CreateDevice></CreateDevice>
+        </div>
+
+    }
+
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public int? Id { get; set; }
+    ReBlaze.DataModel.DataModelContext Context { get; set; }
+
+    private List<ReBlaze.DataModel.Device> _devices;
+    private ReBlaze.DataModel.Device _cur;
+
+    public void Dispose()
+    {
+        Refresher.Unsubscribe("ReBlaze.Pages.Devices", () =>
+        {
+            InvokeAsync(StateHasChanged);
+        });
+        Context?.Dispose();
+    }
+
+    async protected override Task OnInitializedAsync()
+    {
+        Refresher.Subscribe("ReBlaze.Pages.Devices", () =>
+        {
+            UpdateDb().Wait();
+            InvokeAsync(StateHasChanged);
+        });
+        await UpdateDb();
+        await base.OnInitializedAsync();
+
+    }
+
+    public async Task UpdateDb()
+    {
+
+        try
+        {
+            Context = DbFactory.CreateDbContext();
+
+            if (Id.HasValue)
+            {
+                _cur = Context.Devices.First(m => m.ID == Id);
+            }
+            else
+            {
+                _devices = await Context.Devices.Include(d=>d.Model).ThenInclude(d=>d.Commands).ToListAsync();
+                foreach (ReBlaze.DataModel.Device d in _devices) {
+                }
+            }
+        }
+        finally
+        {
+        }
+
+    }
+}

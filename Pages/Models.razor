@@ -1,0 +1,121 @@
+@using ReBlaze.Shared.Model
+
+@implements IDisposable
+@inject IDbContextFactory<ReBlaze.DataModel.DataModelContext> DbFactory
+
+
+@page "/models/{id:int?}"
+
+@* @inject IStorage Storage *@
+@inject IRefresher Refresher
+
+<div class="container">
+    @if (Id.HasValue)
+    {
+        if (_cur == null)
+        {
+            <div class="alert alert-warning" role="alert">
+                Can't find this model
+            </div>
+        }
+        else
+        {
+
+            <h1>@_cur.Name</h1>
+            <p>
+                @_cur.Description
+            </p>
+            if (_cur.Commands != null && _cur.Commands.Count != 0)
+            {
+                <p>Availiable commands:</p>
+                foreach (ReBlaze.DataModel.Command c in _cur.Commands)
+                {
+                    <Command Data=c Parent=_cur />
+                }
+            }
+            <CreateCommand Data=_cur />
+        }
+    }
+    else
+    {
+
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            @if (_models == null)
+            {
+                <div>Thinking about it...</div>
+            }
+            else
+            {
+                if (_models.Count == 0)
+                {
+                    <div>There are no devices in the list. Create some....</div>
+                }
+                else
+                {
+                    foreach (ReBlaze.DataModel.Model m in _models)
+                    {
+                        <Model @key=@m.ID Data=@m></Model>
+                    }
+                }
+
+            }
+
+        </div>
+        <div class="row justify-content-md-center">
+            <CreateModel></CreateModel>
+        </div>
+
+    }
+
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private List<ReBlaze.DataModel.Model> _models;
+    private ReBlaze.DataModel.Model _cur;
+    ReBlaze.DataModel.DataModelContext Context { get; set; }
+
+
+    public void Dispose()
+    {
+        Refresher.Unsubscribe("ReBlaze.Pages.Models", () =>
+        {
+            InvokeAsync(StateHasChanged);
+        });
+        Context?.Dispose();
+    }
+
+    async protected override Task OnInitializedAsync()
+    {
+        Refresher.Subscribe("ReBlaze.Pages.Models", () =>
+        {
+            UpdateDb().Wait();
+            InvokeAsync(StateHasChanged);
+        });
+        await UpdateDb();
+        await base.OnInitializedAsync();
+
+    }
+
+
+    protected override void OnParametersSet()
+    {
+        UpdateDb().Wait();
+    }
+    public async Task UpdateDb()
+    {
+        Context = DbFactory.CreateDbContext();
+
+        if (Id.HasValue)
+        {
+            _cur = Context.Models.Include(m => m.Commands).First(m => m.ID == Id);
+        }
+        else
+        {
+            _models = await Context.Models.Include(p => p.Commands).ToListAsync();
+        }
+
+    }
+}

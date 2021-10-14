@@ -1,0 +1,57 @@
+@implements IDisposable
+@inject IDbContextFactory<ReBlaze.DataModel.DataModelContext> DbFactory
+
+
+@inject IRefresher Refresher
+
+<div class="col-8 m-1">
+    <div class="card">
+        <div class="card-header"><span class="oi oi-vertical-align-center"></span> Add new model</div>
+        <div class="card-body">
+            <form>
+                <div class="form-row mb-3">
+                    <div class="col"><input placeholder="Model name" class="form-control" type="text" @bind=name></div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <input placeholder="Description" class="form-control" type="text"
+                               @bind=description>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col text-center">
+                        <button @onclick=SaveChanges class="btn btn-primary">Save</button>
+
+                    </div>
+                </div>
+
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    public string name { get; set; }
+    public string description { get; set; }
+
+    ReBlaze.DataModel.DataModelContext Context { get; set; }
+
+    private void SaveChanges()
+    {
+        Context = DbFactory.CreateDbContext();
+        Context.Models.AddAsync(new() { Name = name, Description = description }).AsTask().Wait();
+        Context.SaveChangesAsync().Wait();
+        Refresher.CallRequestRefresh("ReBlaze.Pages.Models");
+
+
+    }
+
+
+
+    public void Dispose()
+    {
+        Context?.Dispose();
+    }
+}

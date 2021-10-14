@@ -1,0 +1,60 @@
+@inject IRefresher Refresher
+
+@implements IDisposable
+@inject IDbContextFactory<ReBlaze.DataModel.DataModelContext> DbFactory
+
+
+<div class="col m-2">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between">
+                @(Data.Name??"Loading")
+                @if (Data.Commands == null || Data.Commands.Count == 0)
+                {
+                    <a @onclick=Delete> <span class="oi oi-trash text-end"></span></a>
+
+                }
+            </div>
+
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col">
+                    @(Data.Description??"Coming soon...")
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <NavLink href=@("models/"+@Data.ID)>Settings...</NavLink>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+@code {
+    // Demonstrates how a parent component can supply parameters
+    [Parameter]
+    public ReBlaze.DataModel.Model Data { get; set; }
+
+    ReBlaze.DataModel.DataModelContext Context { get; set; }
+
+    private void Delete()
+    {
+
+        Context = DbFactory.CreateDbContext();
+        Context.Models.Remove(Data);
+        Context.SaveChangesAsync().Wait();
+
+        Refresher.CallRequestRefresh("ReBlaze.Pages.Models");
+    }
+    public void Dispose()
+    {
+        Context?.Dispose();
+    }
+
+}

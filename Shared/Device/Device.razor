@@ -1,0 +1,146 @@
+@using ReBlaze
+@inject IRefresher Refresher
+@inject NavigationManager Navigator
+@implements IDisposable
+@inject IDbContextFactory<ReBlaze.DataModel.DataModelContext> DbFactory
+
+<div class="col">
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between">
+                @(Data.Name??"Loading")
+                <a @onclick=Delete> <span class="oi oi-trash text-end"></span></a>
+            </div>
+
+        </div>
+        <div class="card-body">
+            @if (!String.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="row">
+                    <div class="col">@ErrorMessage</div>
+                    <div class="col-2"><button class="btn btn-primary" @onclick="ClearError">Close</button></div>
+                </div>
+            }
+            <div class="row">
+                <div class="col-6">
+                    <small>@Data.Description</small>
+                </div>
+                <div class="col">
+                    @Data.Address
+                </div>
+                <div class="col">
+                    @if (Data.Model == null)
+                    {
+                        <p>--Select model--</p>
+                    }
+                    else
+                    {
+                        @Data.Model.Name
+                    }
+                </div>
+                <div class="col">
+                    @Data.Port
+                </div>
+            </div>
+            <div class="row justify-content-end">
+                <div class="col-2">
+                    @if (ShowCommands)
+                    {
+                        <a role="button" href="javascript:void(0);" @onclick="ToggleShow">Hide commands</a>
+                    }
+                    else
+                    {
+                        <a role="button" href="javascript:void(0);" @onclick="ToggleShow">Show commands</a>
+
+                    }
+                </div>
+            </div>
+            @if (ShowCommands)
+            {
+                @foreach (var c in Data.Model.Commands)
+                {
+                    <div class="row">
+                        <div class="col">
+                            <small>@c.Description</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="input-group mb-3">
+
+                                <input type="text"
+                               class="form-control"
+                               placeholder="Command text"
+                               value=@($"{Navigator.BaseUri}api/send/{Data.Name}/{c.Name}")>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="()=> {ProcessCommand(Data.Name, c.Name);}">
+                                        <span class="oi oi-bolt"></span>
+                                    </button>
+                                </div>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button">
+                                        <span class="oi oi-clipboard"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+
+</div>
+
+@code {
+    [Parameter]
+    public ReBlaze.DataModel.Device Data { get; set; }
+
+    ReBlaze.DataModel.DataModelContext Context { get; set; }
+
+    bool ShowCommands = false;
+
+    string ErrorMessage { get; set; }
+    void ClearError()
+    {
+        ErrorMessage = "";
+    }
+
+    public void Dispose()
+    {
+        Context?.Dispose();
+    }
+
+    public void Delete()
+    {
+        if (Context == null)
+            Context = DbFactory.CreateDbContext();
+        Context.Devices.Remove(Context.Devices.First(d => d.ID == Data.ID));
+        Context.SaveChanges();
+        Refresher.CallRequestRefresh("ReBlaze.Pages.Devices");
+    }
+
+    public void ToggleShow()
+    {
+        ShowCommands = !ShowCommands;
+    }
+
+    public void ProcessCommand(String DeviceName, String Command)
+    {
+        try
+        {
+            CommandRunner c = new(DbFactory.CreateDbContext());
+            var answer = c.Run(DeviceName, Command);
+            ErrorMessage = $"Command {Command} was successfuly sent to {DeviceName} with the payload of {answer}";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error while running last command. {ex.Message}";
+        }
+
+    }
+
+
+}
