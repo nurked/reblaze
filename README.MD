@@ -13,7 +13,7 @@ ReBlaze solves the above problems. You can purchase any device that connects to 
 
 ### Basic concept
 
-![](img/hatting1.png)
+![](wwwroot/img/hatting1.png)
 
 ReBlaze has a database in its core. You need to explain to it what devices you have on the network,how to name those and what commands to send.Once this is done you can send the device name and command name to the ReBlaze, and it willsend the actual command to a device.
 
@@ -45,17 +45,17 @@ Study your device documentation to figure out what are you trying to send to the
 
 Below is an excerpt from the manual of RLY-8 DF Robots relay.
 
-![](img/hatting2.png)
+![](wwwroot/img/hatting2.png)
 
 You can clearly see what sequence of bytes you need to send to the device to activate one or another function.Let's implement this command in our system.
 
 Go to the [Models](models) and create a new device model at the bottom of a page. Type a model name and it's description.
 
-![](img/hatting3.png)
+![](wwwroot/img/hatting3.png)
 
 After this is done, go to the settings page of this new device. The only option you will see would be "Add command".
 
-![](img/hatting4.png)
+![](wwwroot/img/hatting4.png)
 
 Type a name for this command (`relay-1-on`), write a description and type the exact sequence ofbytes you can see in the manual in the payload field. Select the command type to be ByteArray.
 
@@ -69,7 +69,7 @@ It gets easier. It's very improbable that you will find a device that has to wor
 
 Most of the devices will use strings of some sort to set state. It's the easiest thing to program. Let's look in the manual again:
 
-![](img/hatting5.png)
+![](wwwroot/img/hatting5.png)
 
 Here one can see a string of text you can send to the device to turn on first 6 relays. Add a new command, select format of UTF String and type just exactly that in the payload field:`{"relay1":"on","relay2":"on","relay3":"on","relay4":"on","relay5":"on","relay6":"on","relay7":"off","relay8":"off"}`
 
